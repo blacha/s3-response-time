@@ -42,3 +42,4 @@ export class S3BenchmarkStack extends cdk.Stack {
 const S3Benchmark = new cdk.App();
 
 new S3BenchmarkStack(S3Benchmark, 'S3Benchmark', { env: { region: 'us-east-1' } })
+new S3BenchmarkStack(S3Benchmark, 'S3BenchmarkApSe2', { env: { region: 'ap-southeast-2' } })

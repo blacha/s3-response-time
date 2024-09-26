@@ -1,6 +1,11 @@
+# Run local
+
+export BUCKET_NAME=some-test-bucket
+npx tsx src/bin.ts
+
 # Deploy
 
-npx cdk --app "npx tsx src/cdk.ts" deploy
+npx cdk --app "npx tsx src/cdk.ts" deploy --all
 
 
 # Invoke
