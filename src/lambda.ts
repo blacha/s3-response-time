@@ -43,7 +43,14 @@ export async function handler() {
   const buf64 = buf1M.subarray(0, 64 * 1024)
   const buf32 = buf1M.subarray(0, 32 * 1024)
   // Warmup
-  await write('1m.bin', buf1M)
+  for (let i = 0; i < 5; i++) {
+    await write('1m.bin', buf1M)
+    await write('64k.bin', buf64)
+    await write('32k.bin', buf32)
+    await read('1m.bin')
+    await read('64k.bin')
+    await read('32k.bin')
+  }
 
   for (let i = 0; i < iterCount; i++) {
     metrics.write1M.push(await write('1m.bin', buf1M))
@@ -60,17 +67,17 @@ export async function handler() {
   }
 
   for (let i = 0; i < iterCount; i++) {
-    metrics.read1M.push(await read('1m.bin',))
-    metrics.read1M.push(await read('1m.bin',))
-    metrics.read1M.push(await read('1m.bin',))
+    metrics.read1M.push(await read('1m.bin'))
+    metrics.read1M.push(await read('1m.bin'))
+    metrics.read1M.push(await read('1m.bin'))
 
-    metrics.read64k.push(await read('64k.bin',))
-    metrics.read64k.push(await read('64k.bin',))
-    metrics.read64k.push(await read('64k.bin',))
+    metrics.read64k.push(await read('64k.bin'))
+    metrics.read64k.push(await read('64k.bin'))
+    metrics.read64k.push(await read('64k.bin'))
 
-    metrics.read32k.push(await read('32k.bin',))
-    metrics.read32k.push(await read('32k.bin',))
-    metrics.read32k.push(await read('32k.bin',))
+    metrics.read32k.push(await read('32k.bin'))
+    metrics.read32k.push(await read('32k.bin'))
+    metrics.read32k.push(await read('32k.bin'))
   }
 
   return {
