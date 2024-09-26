@@ -1,6 +1,7 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomFill } from 'node:crypto'
 import { Buffer } from 'node:buffer'
+import assert from 'node:assert'
 const client = new S3Client()
 
 async function write(name, buff) {
@@ -13,79 +14,65 @@ async function write(name, buff) {
   return performance.now() - before;
 }
 
-async function read(name) {
+const OneMb = 1024 * 1024;
+async function read(name, size) {
+  const chunks = OneMb / size
+  const chunk = Math.floor(Math.random() * chunks);
+  const range = `bytes=${chunk * size}-${(chunk + 1) * size}`
+  console.log('read', { chunk, range })
+
   let before = performance.now();
   const ret = await client.send(new GetObjectCommand({
     Bucket: process.env.BUCKET_NAME,
     Key: name,
+    Range: `bytes=${chunk * size}-${(chunk + 1) * size - 1}`
   }))
+  assert.equal(ret.ContentLength, size)
   return performance.now() - before;
 }
 
 export async function handler() {
 
-  const iterCount = 10;
+  const iterCount = 3;
 
   const metrics = {
-    write1M: [],
-    read1M: [],
-
-    write64k: [],
+    warmup: [],
     read64k: [],
-
-    write32k: [],
     read32k: []
   }
 
   const buf1M = Buffer.alloc(1024 * 1024);
   await new Promise(r => randomFill(buf1M, r));
 
-  const buf64 = buf1M.subarray(0, 64 * 1024)
-  const buf32 = buf1M.subarray(0, 32 * 1024)
+  await write('1m.bin', buf1M)
+
   // Warmup
-  for (let i = 0; i < 5; i++) {
-    await write('1m.bin', buf1M)
-    await write('64k.bin', buf64)
-    await write('32k.bin', buf32)
-    await read('1m.bin')
-    await read('64k.bin')
-    await read('32k.bin')
+  for (let i = 0; i < 3; i++) {
+    metrics.warmup.push(await read('1m.bin', 64 * 1024))
+    metrics.warmup.push(await read('1m.bin', 32 * 1024))
   }
+
+  console.log('warmup:done', metrics)
 
   for (let i = 0; i < iterCount; i++) {
-    metrics.write1M.push(await write('1m.bin', buf1M))
-    metrics.write1M.push(await write('1m.bin', buf1M))
-    metrics.write1M.push(await write('1m.bin', buf1M))
+    metrics.read64k.push(await read('1m.bin', 64 * 1024))
+    metrics.read64k.push(await read('1m.bin', 64 * 1024))
+    metrics.read64k.push(await read('1m.bin', 64 * 1024))
 
-    metrics.write64k.push(await write('64k.bin', buf64))
-    metrics.write64k.push(await write('64k.bin', buf64))
-    metrics.write64k.push(await write('64k.bin', buf64))
-
-    metrics.write32k.push(await write('32k.bin', buf32))
-    metrics.write32k.push(await write('32k.bin', buf32))
-    metrics.write32k.push(await write('32k.bin', buf32))
+    metrics.read32k.push(await read('1m.bin', 32 * 1024))
+    metrics.read32k.push(await read('1m.bin', 32 * 1024))
+    metrics.read32k.push(await read('1m.bin', 32 * 1024))
   }
+  console.log('read:done', metrics)
 
-  for (let i = 0; i < iterCount; i++) {
-    metrics.read1M.push(await read('1m.bin'))
-    metrics.read1M.push(await read('1m.bin'))
-    metrics.read1M.push(await read('1m.bin'))
-
-    metrics.read64k.push(await read('64k.bin'))
-    metrics.read64k.push(await read('64k.bin'))
-    metrics.read64k.push(await read('64k.bin'))
-
-    metrics.read32k.push(await read('32k.bin'))
-    metrics.read32k.push(await read('32k.bin'))
-    metrics.read32k.push(await read('32k.bin'))
-  }
 
   return {
     statusCode: 200,
     headers: {
-      'Content-Type': "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(metrics)
+    body: JSON.stringify(metrics),
+    isBase64Encoded: false
   }
 }
 
