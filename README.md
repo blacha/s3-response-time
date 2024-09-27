@@ -5,8 +5,10 @@ Deploy a lambda function into each region and check lambda -> s3 response time w
 
 ##  Run local
 
+```
 export BUCKET_NAME=some-test-bucket
 npx tsx src/bin.ts
+```
 
 ##  Deploy
 

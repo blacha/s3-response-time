@@ -28,17 +28,19 @@ async function read(name, size) {
     Range: `bytes=${chunk * size}-${(chunk + 1) * size - 1}`
   }))
   assert.equal(ret.ContentLength, size)
+  assert.equal(ret.$metadata.attempts, 1);
+  
+  const buf = await new Response(ret.Body).arrayBuffer()
+  assert.equal(buf.byteLength, size)
+
   return performance.now() - before;
 }
 
 export async function handler() {
 
-  const iterCount = 3;
-
   const metrics = {
     warmup: [],
     read64k: [],
-    read32k: []
   }
 
   const buf1M = Buffer.alloc(1024 * 1024);
@@ -49,19 +51,11 @@ export async function handler() {
   // Warmup
   for (let i = 0; i < 3; i++) {
     metrics.warmup.push(await read('1m.bin', 64 * 1024))
-    metrics.warmup.push(await read('1m.bin', 32 * 1024))
   }
-
   console.log('warmup:done', metrics)
 
-  for (let i = 0; i < iterCount; i++) {
+  for (let i = 0; i < 20; i++) {
     metrics.read64k.push(await read('1m.bin', 64 * 1024))
-    metrics.read64k.push(await read('1m.bin', 64 * 1024))
-    metrics.read64k.push(await read('1m.bin', 64 * 1024))
-
-    metrics.read32k.push(await read('1m.bin', 32 * 1024))
-    metrics.read32k.push(await read('1m.bin', 32 * 1024))
-    metrics.read32k.push(await read('1m.bin', 32 * 1024))
   }
   console.log('read:done', metrics)
 
