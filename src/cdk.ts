@@ -70,18 +70,6 @@ export class S3BenchmarkStack extends cdk.Stack {
       });
       bucket.grantRead(lfGo);
     }
-
-    // const functionUrlNode = new lambda.FunctionUrl(this, 'LambdaUrlNode', {
-    //   function: lf,
-    //   authType: lambda.FunctionUrlAuthType.NONE,
-    // });
-    // new cdk.CfnOutput(this, 'UrlNode', { value: functionUrlNode.url });
-
-    // const functionUrlGo = new lambda.FunctionUrl(this, 'LambdaUrlGo', {
-    //   function: lfGo,
-    //   authType: lambda.FunctionUrlAuthType.NONE,
-    // });
-    // new cdk.CfnOutput(this, 'UrlGo', { value: functionUrlGo.url });
   }
 }
 
