@@ -34,7 +34,7 @@ func read(svc *s3.S3, bucket_name string) (float64, error) {
 	rawObject, err := svc.GetObject(
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket_name),
-			Key:    aws.String("1m.bin"),
+			Key:    aws.String("10m.bin"),
 			Range:  aws.String(req_range),
 		})
 	if err != nil {
@@ -59,7 +59,7 @@ func do_request() (string, error) {
 	sess, _ := session.NewSession(&aws.Config{})
 	svc := s3.New(sess)
 
-	var read_64 [10]float64
+	var read_64 [20]float64
 	var warmup [3]float64
 	for i := 0; i < 3; i++ {
 		total_time, err := read(svc, bucket_name)
