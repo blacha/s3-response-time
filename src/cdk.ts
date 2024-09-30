@@ -78,7 +78,7 @@ const S3Benchmark = new cdk.App();
 // new S3BenchmarkStack(S3Benchmark, 'S3Benchmark', { env: { region: 'us-east-1' } })
 // new S3BenchmarkStack(S3Benchmark, 'S3Benchmark', { env: { region: 'us-west-2' } })
 
-// new S3BenchmarkStack(S3Benchmark, 'S3BenchmarkApSe2', { env: { region: 'ap-southeast-2', account: process.env.CDK_DEFAULT_ACCOUNT } })
-new S3BenchmarkStack(S3Benchmark, "S3BenchmarkApSe4", {
-  env: { region: "ap-southeast-4", account: process.env.CDK_DEFAULT_ACCOUNT },
-});
+new S3BenchmarkStack(S3Benchmark, 'S3BenchmarkApSe2', { env: { region: 'ap-southeast-2', account: process.env.CDK_DEFAULT_ACCOUNT } })
+// new S3BenchmarkStack(S3Benchmark, "S3BenchmarkApSe4", {
+//   env: { region: "ap-southeast-4", account: process.env.CDK_DEFAULT_ACCOUNT },
+// });

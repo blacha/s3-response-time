@@ -65,9 +65,10 @@ export async function handler() {
   }
   console.log("warmup:done", metrics);
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 50; i++) {
     metrics.read64k.push(await read(fileName, 64 * 1024));
   }
+  metrics.read64k.sort();
   console.log("read:done", metrics);
 
   return {

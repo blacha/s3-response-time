@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -20,7 +21,7 @@ import (
 )
 
 func get_range() string {
-	current_chunk := rand.Intn(16)
+	current_chunk := rand.Intn(160) // 10MB source file split into 64kb chunks = 160 chunks
 
 	chunk_start := current_chunk * 64 * 1024
 	chunk_end := ((current_chunk + 1) * 64 * 1024) - 1
@@ -59,23 +60,24 @@ func do_request() (string, error) {
 	sess, _ := session.NewSession(&aws.Config{})
 	svc := s3.New(sess)
 
-	var read_64 [20]float64
-	var warmup [3]float64
+	var read_64 []float64
+	var warmup []float64
 	for i := 0; i < 3; i++ {
 		total_time, err := read(svc, bucket_name)
 		if err != nil {
 			return "", err
 		}
-		warmup[i] = total_time
+		warmup = append(warmup, total_time)
 	}
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 50; i++ {
 		total_time, err := read(svc, bucket_name)
 		if err != nil {
 			return "", err
 		}
-		read_64[i] = total_time
+		read_64 = append(read_64, total_time)
 	}
+	sort.Float64s(read_64)
 
 	output := map[string][]float64{"warmup": warmup[:], "read64k": read_64[:]}
 	out_bytes, err := json.Marshal(output)
