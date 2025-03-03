@@ -1,5 +1,6 @@
 import {
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -8,7 +9,10 @@ import { Buffer } from "node:buffer";
 import assert from "node:assert";
 const client = new S3Client();
 
-async function write(name, buff) {
+const SourceFileSizeMb = 100;
+const ReadSizeKb = [32, 64, 128, 256, 512];
+
+async function write(name: string, buff: Buffer): Promise<number> {
   let before = performance.now();
   await client.send(
     new PutObjectCommand({
@@ -20,8 +24,31 @@ async function write(name, buff) {
   return performance.now() - before;
 }
 
+function shuffle<T>(array: T[]): void {
+  let currentIndex = array.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+}
+
+async function head(name: string): Promise<boolean> {
+  const ret = await client.send(
+    new HeadObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: name })
+  ).catch(_e => null)
+  return (ret?.ContentLength ?? 0) > 0
+}
+
 const OneMb = 1024 * 1024;
-async function read(name, size) {
+async function read(name: string, size: number): Promise<number> {
   const chunks = OneMb / size;
   const chunk = Math.floor(Math.random() * chunks);
   const range = `bytes=${chunk * size}-${(chunk + 1) * size}`;
@@ -38,38 +65,55 @@ async function read(name, size) {
   assert.equal(ret.ContentLength, size);
   assert.equal(ret.$metadata.attempts, 1);
 
-  const buf = await new Response(ret.Body).arrayBuffer();
+  const buf = await new Response(ret.Body as BodyInit).arrayBuffer();
   assert.equal(buf.byteLength, size);
 
   return performance.now() - before;
 }
 
-export async function handler() {
-  const size = 10 * 1024 * 1024;
+export async function randomFile(): Promise<{ fileName: string, size: number }> {
+  const size = SourceFileSizeMb * 1024 * 1024;
+  const fileName = `${SourceFileSizeMb}m.bin`;
+
+  const ex = await head(fileName)
+  if (ex) return { fileName, size }
   const buf = Buffer.alloc(size);
   await new Promise((r) => randomFill(buf, r));
 
-  const fileName = "10m.bin";
+  await write(fileName, buf);
+  return { fileName, size }
+}
+
+export async function handler() {
+  const source = await randomFile();
 
   const metrics = {
-    source: { name: fileName, size },
-    warmup: [],
-    read64k: [],
+    source,
+    warmup: [] as number[],
+    reads: {} as Record<string, number[]>,
+    readOrder: [] as number[]
   };
 
-  await write(fileName, buf);
+  for (const r of ReadSizeKb) metrics.reads[r] = [];
 
   // Warmup
   for (let i = 0; i < 3; i++) {
-    metrics.warmup.push(await read(fileName, 64 * 1024));
+    metrics.warmup.push(await read(source.fileName, 64 * 1024));
   }
   console.log("warmup:done", metrics);
 
-  for (let i = 0; i < 50; i++) {
-    metrics.read64k.push(await read(fileName, 64 * 1024));
+  const readOrder = [...ReadSizeKb];
+  shuffle(readOrder);
+
+  for (const amount of readOrder) {
+    metrics.reads[amount] = [];
+    metrics.readOrder.push(amount);
+    for (let i = 0; i < 50; i++) {
+      metrics.reads[amount].push(await read(source.fileName, amount * 1024));
+    }
+    metrics.reads[amount].sort();
+    console.log("read:done:" + amount, metrics.reads[amount]);
   }
-  metrics.read64k.sort();
-  console.log("read:done", metrics);
 
   return {
     statusCode: 200,

@@ -28,48 +28,51 @@ export class S3BenchmarkStack extends cdk.Stack {
       logRetention: RetentionDays.ONE_MONTH,
     });
     bucket.grantReadWrite(lf);
+    const nodeUrl = lf.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.NONE });
+    new cdk.CfnOutput(this, 'UrlNode', { value: nodeUrl.url })
 
-    const lfGo = new go.GoFunction(this, "S3BenchmarkLambdaGo", {
-      runtime: lambda.Runtime.PROVIDED_AL2023,
-      memorySize: 2048,
-      timeout: cdk.Duration.seconds(60),
-      entry: "main.go",
-      architecture: lambda.Architecture.X86_64,
-      environment,
-      logRetention: RetentionDays.ONE_MONTH,
-    });
+    // const lfGo = new go.GoFunction(this, "S3BenchmarkLambdaGo", {
+    //   runtime: lambda.Runtime.PROVIDED_AL2023,
+    //   memorySize: 2048,
+    //   timeout: cdk.Duration.seconds(60),
+    //   entry: "main.go",
+    //   architecture: lambda.Architecture.X86_64,
+    //   environment,
+    //   logRetention: RetentionDays.ONE_MONTH,
+    // });
 
-    bucket.grantRead(lfGo);
+    // bucket.grantRead(lfGo);
 
-    const vpcId = scope.node.tryGetContext("vpc-id");
-    if (vpcId) {
-      const vpc = Vpc.fromLookup(this, "Vpc", { vpcId });
 
-      const lf = new NodejsFunction(this, "S3BenchmarkLambdaVpc", {
-        runtime: lambda.Runtime.NODEJS_20_X,
-        memorySize: 2048,
-        timeout: cdk.Duration.seconds(60),
-        handler: "index.handler",
-        entry: "./src/lambda.ts",
-        vpc,
-        architecture: lambda.Architecture.X86_64,
-        environment,
-        logRetention: RetentionDays.ONE_MONTH,
-      });
-      bucket.grantReadWrite(lf);
+    // const vpcId = scope.node.tryGetContext("vpc-id");
+    // if (vpcId) {
+    //   const vpc = Vpc.fromLookup(this, "Vpc", { vpcId });
 
-      const lfGo = new go.GoFunction(this, "S3BenchmarkLambdaGoVpc", {
-        runtime: lambda.Runtime.PROVIDED_AL2023,
-        memorySize: 2048,
-        timeout: cdk.Duration.seconds(60),
-        entry: "main.go",
-        vpc,
-        architecture: lambda.Architecture.X86_64,
-        environment,
-        logRetention: RetentionDays.ONE_MONTH,
-      });
-      bucket.grantRead(lfGo);
-    }
+    //   const lf = new NodejsFunction(this, "S3BenchmarkLambdaVpc", {
+    //     runtime: lambda.Runtime.NODEJS_20_X,
+    //     memorySize: 2048,
+    //     timeout: cdk.Duration.seconds(60),
+    //     handler: "index.handler",
+    //     entry: "./src/lambda.ts",
+    //     vpc,
+    //     architecture: lambda.Architecture.X86_64,
+    //     environment,
+    //     logRetention: RetentionDays.ONE_MONTH,
+    //   });
+    //   bucket.grantReadWrite(lf);
+
+    //   const lfGo = new go.GoFunction(this, "S3BenchmarkLambdaGoVpc", {
+    //     runtime: lambda.Runtime.PROVIDED_AL2023,
+    //     memorySize: 2048,
+    //     timeout: cdk.Duration.seconds(60),
+    //     entry: "main.go",
+    //     vpc,
+    //     architecture: lambda.Architecture.X86_64,
+    //     environment,
+    //     logRetention: RetentionDays.ONE_MONTH,
+    //   });
+    //   bucket.grantRead(lfGo);
+    // }
   }
 }
 
