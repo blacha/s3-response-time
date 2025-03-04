@@ -4,7 +4,17 @@ Deploy a lambda function into each region and check lambda -> s3 response time w
 
 ## Summary
 
+### Response by region
+
 ![Response time by region](./response-time-region.webp)
+
+### Response by request size
+
+![Response time by request size](./response-time-size.webp)
+
+### Other tests
+
+Comparing lambda memory allocation
 
 | Env    | Language        | Read Size | Approx duration |
 | ------ | --------------- | --------- | --------------- |
@@ -25,17 +35,17 @@ With VPC Endpoints
 
 > ARM vs x86 did not make any difference for the response times
 
-![Response time by request size](./response-time-size.webp)
+Comparing file request size
 
 | Env    | Language        | Read Size | Approx duration |
 | ------ | --------------- | --------- | --------------- |
-| Lambda | NodeJs >=1024mb | 32KB      | 22ms            |
-| Lambda | NodeJs >=1024mb | 64KB      | 22ms            |
-| Lambda | NodeJs >=1024mb | 128KB     | 22ms            |
-| Lambda | NodeJs >=1024mb | 256KB     | 24ms            |
-| Lambda | NodeJs >=1024mb | 512KB     | 25ms            |
-| Lambda | NodeJs >=1024mb | 1024KB    | 28ms            |
-| Lambda | NodeJs >=1024mb | 2048KB    | 35ms            |
+| Lambda | NodeJs 2048mb   | 32KB      | 22ms            |
+| Lambda | NodeJs 2048mb   | 64KB      | 22ms            |
+| Lambda | NodeJs 2048mb   | 128KB     | 22ms            |
+| Lambda | NodeJs 2048mb   | 256KB     | 24ms            |
+| Lambda | NodeJs 2048mb   | 512KB     | 25ms            |
+| Lambda | NodeJs 2048mb   | 1024KB    | 28ms            |
+| Lambda | NodeJs 2048mb   | 2048KB    | 35ms            |
 
 
 ## Run local
