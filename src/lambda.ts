@@ -10,7 +10,7 @@ import assert from "node:assert";
 const client = new S3Client();
 
 const SourceFileSizeMb = 100;
-const ReadSizeKb = [32, 64, 128, 256, 512];
+const ReadSizeKb = [32, 64, 128, 256, 512, 768, 1024, 2048];
 
 async function write(name: string, buff: Buffer): Promise<number> {
   let before = performance.now();
