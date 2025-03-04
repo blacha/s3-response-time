@@ -59,7 +59,7 @@ wget https://......lambda-url.us-east-1.on.aws/
 
 Time in MS to read the chunk
 
-```json
+```javascript
 {
   // Where the file was read from including its size
   "source": {
